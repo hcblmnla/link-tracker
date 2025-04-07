@@ -1,0 +1,47 @@
+app:
+  github-token: ${GITHUB_TOKEN} # env variable
+  stackoverflow:
+    key: ${SO_TOKEN_KEY}
+    access-token: ${SO_ACCESS_TOKEN}
+  access-type: SQL
+
+spring:
+  application:
+    name: Scrapper
+  liquibase:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/scrapper
+    username: postgres
+    password: postgres
+
+server:
+  port: 8081
+  base-url: http://localhost:8080/
+  github-base: https://api.github.com/repos
+  stackoverflow-base: https://api.stackexchange.com/2.3/questions
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+
+scheduler:
+  delay: 10s
+
+update:
+  interval: 1 hour
+  minutes: 60
+
+batch:
+  size: 1000
+  threads: 4
+  awaiting: 1
+
+logging.structured.format.file: ecs
+logging.file.name: log.json

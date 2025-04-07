@@ -1,0 +1,33 @@
+app:
+  telegram-token: ${TELEGRAM_TOKEN} # env variable
+
+spring:
+  application:
+    name: Bot
+  liquibase:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: 8080
+  base-url: http://localhost:8081/
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+
+logging.structured.format.file: ecs
+logging.file.name: log.json
+
+descriptions:
+  help: "возвращает лист доступных команд"
+  list: "возвращает лист отслеживаемых ссылок"
+  start: "запускает бота и вводит в курс дела"
+  track: "начинает отслеживание ссылки"
+  untrack: "прекращает отслеживание ссылки"
+  addtag: "добавляет тег"
+  tags: "возвращает лист тегов"
