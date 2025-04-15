@@ -1,5 +1,3 @@
-![Build](https://github.com/central-university-dev/java-hcblmnla/actions/workflows/build.yaml/badge.svg)
-
 # Link Tracker
 
 Студент – Серов Даниил Алексеевич, проект сделан в рамках Академии Бэкенда.
