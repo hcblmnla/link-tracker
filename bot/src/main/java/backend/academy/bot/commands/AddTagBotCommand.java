@@ -27,10 +27,10 @@ public class AddTagBotCommand implements StateCommand {
 
     @Override
     public StateResponse handleRequest(final long id, final String... args) {
-        if (args.length < 2) {
+        if (args.length < SINGLE_COMMAND_SIZE) {
             return StateResponse.ofState(BotState.MISSING_TAG);
         }
-        final String tag = args[1];
+        final String tag = args[SINGLE_COMMAND_INDEX];
         try {
             service.addTag(id, tag);
         } catch (final AddTagServiceException e) {

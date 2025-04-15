@@ -4,16 +4,16 @@ import backend.academy.base.schema.scrapper.AddLinkRequest;
 import backend.academy.base.schema.scrapper.AddTagRequest;
 import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.scrapper.dto.LinkDto;
-import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.link.service.LinkService;
 import backend.academy.scrapper.service.github.GitHubSourceService;
 import backend.academy.scrapper.service.stackoverflow.StackOverflowSourceService;
-import backend.academy.scrapper.validation.LinkType;
 import java.net.URI;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ScrapperService {
 
-    private final LinkRepository linkRepository;
+    private final LinkService linkService;
 
     private final GitHubSourceService gitHubService;
     private final StackOverflowSourceService stackOverflowService;
@@ -38,6 +38,9 @@ public class ScrapperService {
 
     @Value("${batch.awaiting}")
     private int awaiting;
+
+    @Value("${update.minutes}")
+    private long updateInterval;
 
     private void checkForUpdate(final LinkDto linkDto) {
         log.atInfo()
@@ -52,15 +55,25 @@ public class ScrapperService {
                 };
 
         if (updated) {
-            linkRepository.markLinkChecked(linkDto);
+            linkService.markLinkChecked(linkDto);
+        }
+    }
+
+    private void checkForUpdateImpl(final Consumer<LinkDto> action) {
+        for (final LinkDto linkDto : linkService.getAllLinks(batchSize, updateInterval)) {
+            action.accept(linkDto);
         }
     }
 
     public void checkForUpdate() {
+        if (threads == 1) {
+            checkForUpdateImpl(this::checkForUpdate);
+            return;
+        }
         try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
-            for (final LinkDto linkDto : linkRepository.getAllLinks(batchSize)) {
+            checkForUpdateImpl(linkDto -> {
                 final Future<?> ignored = executor.submit(() -> checkForUpdate(linkDto));
-            }
+            });
             executor.shutdown();
             if (!executor.awaitTermination(awaiting, TimeUnit.MINUTES)) {
                 log.error("Timed out waiting for update checking");
@@ -71,12 +84,12 @@ public class ScrapperService {
     }
 
     public void registerChat(final long id) {
-        linkRepository.registerChat(id);
+        linkService.registerChat(id);
         log.atInfo().setMessage("Registering chat").addKeyValue("id", id).log();
     }
 
     public boolean deleteChat(final long id) {
-        final boolean deleted = linkRepository.deleteChat(id);
+        final boolean deleted = linkService.deleteChat(id);
         if (deleted) {
             log.atInfo().setMessage("Deleted chat").addKeyValue("id", id).log();
         } else {
@@ -89,7 +102,7 @@ public class ScrapperService {
     }
 
     public List<String> getTags(final long id) {
-        final List<String> tags = linkRepository.getTags(id);
+        final List<String> tags = linkService.getTags(id);
         log.atInfo()
                 .setMessage("Getting tags")
                 .addKeyValue("id", id)
@@ -99,12 +112,12 @@ public class ScrapperService {
     }
 
     public void addTag(final long id, final AddTagRequest request) {
-        linkRepository.addTag(id, request.name());
+        linkService.addTag(id, request.name());
         log.atInfo().setMessage("Added tag").addKeyValue("id", id).log();
     }
 
     public List<LinkResponse> getLinks(final long id) {
-        final List<LinkDto> links = linkRepository.getLinks(id);
+        final List<LinkDto> links = linkService.getLinks(id);
 
         log.atInfo()
                 .setMessage("Getting links")
@@ -118,13 +131,13 @@ public class ScrapperService {
     }
 
     public void addLink(final long id, @NonNull final AddLinkRequest request) {
-        final LinkDto dto = LinkType.parseAndGetDto(request.url(), request.tags(), request.filters());
+        final LinkDto dto = LinkDto.of(request.url(), request.tags(), request.filters());
         movingLinkLog("Adding link", id, dto);
-        linkRepository.addLink(id, dto);
+        linkService.addLink(id, dto);
     }
 
     public LinkDto removeLink(final long id, final URI url) {
-        final LinkDto dto = linkRepository.removeLink(id, url);
+        final LinkDto dto = linkService.removeLink(id, url);
         movingLinkLog("Removed link", id, dto);
         return dto;
     }

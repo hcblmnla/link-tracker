@@ -3,27 +3,40 @@ package backend.academy.scrapper.service.stackoverflow;
 import backend.academy.scrapper.client.SourceClient;
 import backend.academy.scrapper.client.bot.BotClient;
 import backend.academy.scrapper.date.PrettyDateTime;
+import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.dto.stackoverflow.StackOverflowAnswers;
-import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.link.service.LinkService;
 import backend.academy.scrapper.service.AbstractSourceService;
+import backend.academy.scrapper.service.filter.FilterUtils;
 import org.springframework.stereotype.Service;
 
 @Service
 public class StackOverflowSourceService extends AbstractSourceService<StackOverflowAnswers> {
 
+    private static final String ANSWER = "ответ";
+
     public StackOverflowSourceService(
-            final LinkRepository linkRepository,
+            final LinkService linkService,
             final BotClient botClient,
             final SourceClient<StackOverflowAnswers> sourceClient) {
-        super(linkRepository, botClient, sourceClient);
+        super(linkService, botClient, sourceClient);
+    }
+
+    private StackOverflowAnswers.StackOverflowAnswer answer(final StackOverflowAnswers answers) {
+        return answers.items().getFirst();
+    }
+
+    @Override
+    protected boolean isFiltered(final LinkDto dto, final StackOverflowAnswers activity) {
+        return FilterUtils.isFiltered(dto, answer(activity));
     }
 
     @Override
     protected Object[] diffMessageArgs(final StackOverflowAnswers activity) {
-        final StackOverflowAnswers.StackOverflowAnswer answer = activity.items().getFirst();
+        final StackOverflowAnswers.StackOverflowAnswer answer = answer(activity);
 
         return new Object[] {
-            "ответ",
+            ANSWER,
             answer.answerId(),
             answer.owner().displayName(),
             PrettyDateTime.render(answer.creationDate()),

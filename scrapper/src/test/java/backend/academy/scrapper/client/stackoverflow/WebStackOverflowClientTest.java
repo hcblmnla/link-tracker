@@ -1,7 +1,9 @@
 package backend.academy.scrapper.client.stackoverflow;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static org.mockito.Mockito.when;
 
 import backend.academy.scrapper.ScrapperConfig;
@@ -47,8 +49,9 @@ public class WebStackOverflowClientTest extends AbstractWireMockTest {
                 }
                 """;
 
-        // when
-        server.stubFor(get("/1/answers/?site=stackoverflow&body=withbody")
+        server.stubFor(get(urlPathEqualTo("/1/answers/"))
+                .withQueryParam("site", equalTo("stackoverflow"))
+                .withQueryParam("body", equalTo("withbody"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
@@ -59,18 +62,20 @@ public class WebStackOverflowClientTest extends AbstractWireMockTest {
         // then
         StepVerifier.create(result)
                 .expectNextMatches(answers -> answers.items().size() == 2
+                        && answers.items().getFirst() != null
                         && "42".equals(answers.items().getFirst().answerId()))
                 .verifyComplete();
     }
 
     @Test
     public void getAnswers__shouldThrowException_whenResponseIs404() {
-        // given
-        server.stubFor(get("/1/?site=stackoverflow&filter=withbody")
+        server.stubFor(get(urlPathEqualTo("/1/answers/"))
+                .withQueryParam("site", equalTo("stackoverflow"))
+                .withQueryParam("body", equalTo("withbody"))
                 .willReturn(aResponse().withStatus(404)));
-        // when
+
         final Flux<StackOverflowAnswers> result = stackOverflowClient.fetchUpdate(new String[] {"1"});
-        // then
-        StepVerifier.create(result).verifyError();
+
+        StepVerifier.create(result).expectError().verify();
     }
 }

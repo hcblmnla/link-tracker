@@ -7,6 +7,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -16,12 +17,12 @@ import lombok.Getter;
 @SuppressWarnings("ImmutableEnumChecker")
 @SuppressFBWarnings("REDOS") // regex :(
 public enum LinkType {
+    // :NOTE: remove and use host name from URI maybe
     GITHUB(Pattern.compile("^(?:https?://)?github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/?$"), 1, 2),
     STACKOVERFLOW(Pattern.compile("^(?:https?://)?stackoverflow\\.com/questions/(\\d+)(?:/[a-zA-Z0-9_-]+)?/?$"), 1);
 
-    private static final Map<Pattern, LinkType> PATTERNS = Arrays.stream(values())
-            .map(type -> Map.entry(type.pattern, type))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    private static final Map<Pattern, LinkType> PATTERNS =
+            Arrays.stream(values()).collect(Collectors.toMap(LinkType::pattern, Function.identity()));
 
     private final Pattern pattern;
     private final int[] uriIndices;

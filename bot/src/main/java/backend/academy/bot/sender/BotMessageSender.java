@@ -35,11 +35,17 @@ public class BotMessageSender {
     private final BotService service;
 
     private final Map<Long, StateCommand> currentHandlers = new HashMap<>();
+    private final NotificationConfig notificationConfig;
 
-    public BotMessageSender(final TelegramBot bot, final BotCommandLoader commandLoader, final BotService service) {
+    public BotMessageSender(
+            final TelegramBot bot,
+            final BotCommandLoader commandLoader,
+            final BotService service,
+            final NotificationConfig notificationConfig) {
         this.bot = bot;
         this.commands = commandLoader.knownCommands();
         this.service = service;
+        this.notificationConfig = notificationConfig;
     }
 
     @PostConstruct
@@ -72,7 +78,9 @@ public class BotMessageSender {
     }
 
     public void sendUpdate(final long chatId, final URI url, final String description) {
-        sendMessage(chatId, "Обновление на %s%n%s".formatted(url, description));
+        // :NOTE: remove
+        final String prefix = notificationConfig.mode().name().toLowerCase();
+        sendMessage(chatId, "[%s] Обновление на %s%n%s".formatted(prefix, url, description));
     }
 
     public void handleUpdate(@NonNull final Update update) {

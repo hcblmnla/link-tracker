@@ -1,7 +1,7 @@
 package backend.academy.bot.controller;
 
 import backend.academy.base.schema.bot.LinkUpdate;
-import backend.academy.bot.sender.BotMessageSender;
+import backend.academy.bot.link.service.LinkUpdateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,10 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class SimpleBotController implements BotController {
 
-    private final BotMessageSender sender;
+    private final LinkUpdateService linkUpdateService;
 
     @Override
     public void sendUpdate(final LinkUpdate update) {
-        update.chatIds().forEach(chatId -> sender.sendUpdate(chatId, update.url(), update.description()));
+        linkUpdateService.update(update);
     }
 }

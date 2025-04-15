@@ -8,6 +8,7 @@ import backend.academy.base.schema.scrapper.ListLinksResponse;
 import backend.academy.base.schema.scrapper.RemoveLinkRequest;
 import backend.academy.base.schema.scrapper.TagsResponse;
 import backend.academy.bot.client.ScrapperClient;
+import backend.academy.bot.sender.NotificationConfig;
 import backend.academy.bot.service.exception.AddTagServiceException;
 import backend.academy.bot.service.exception.DeletingChatServiceException;
 import backend.academy.bot.service.exception.LinksServiceException;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Service;
 public class BotService {
 
     private final ScrapperClient client;
+    private final NotificationConfig notificationConfig;
 
     public void registerChat(final long id) {
         client.registerChat(id).block();
@@ -43,6 +45,16 @@ public class BotService {
             logError("Error deleting chat", id, e);
             throw new DeletingChatServiceException(e);
         }
+    }
+
+    public void setDigest(final long id) {
+        notificationConfig.mode(NotificationConfig.Mode.DIGEST);
+        logInfo("Set digest", id);
+    }
+
+    public void setInstantMode(final long id) {
+        notificationConfig.mode(NotificationConfig.Mode.INSTANT);
+        logInfo("Set instant mode", id);
     }
 
     public List<String> getTags(final long id) throws TagsServiceException {

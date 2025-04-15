@@ -36,11 +36,11 @@ public class TrackBotCommand implements StateCommand {
     }
 
     private BotState handleInitialState(final long id, final String[] args) {
-        if (args.length < 2) {
+        if (args.length < SINGLE_COMMAND_SIZE) {
             return BotState.MISSING_LINK;
         }
         try {
-            currentLinks.put(id, new TrackingLink(args[1]));
+            currentLinks.put(id, new TrackingLink(args[SINGLE_COMMAND_INDEX]));
         } catch (final URISyntaxException e) {
             return BotState.MALFORMED_LINK;
         }

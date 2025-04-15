@@ -9,20 +9,16 @@ import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.base.schema.scrapper.ListLinksResponse;
 import backend.academy.base.schema.scrapper.RemoveLinkRequest;
 import backend.academy.base.schema.scrapper.TagsResponse;
-import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
 public class WebScrapperClient extends AbstractWebClient implements ScrapperClient {
-
-    private static final Predicate<HttpStatusCode> CLIENT_ERROR = HttpStatusCode::is4xxClientError;
 
     public WebScrapperClient(@Value("${server.base-url}") final String baseUrl) {
         super(baseUrl);
@@ -33,7 +29,7 @@ public class WebScrapperClient extends AbstractWebClient implements ScrapperClie
                 .method(method)
                 .uri(TG_CHAT_URI, id)
                 .retrieve()
-                .onStatus(CLIENT_ERROR, response -> response.bodyToMono(ApiErrorResponse.class)
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(ApiErrorResponse.class)
                         .flatMap(error -> Mono.error(new ApiErrorException(error))))
                 .bodyToMono(Void.class);
     }
@@ -54,11 +50,8 @@ public class WebScrapperClient extends AbstractWebClient implements ScrapperClie
                 .uri(uri)
                 .header(TG_CHAT_ID_HEADER, Long.toString(chatId))
                 .retrieve()
-                .onStatus(
-                        code -> code.isSameCodeAs(HttpStatus.BAD_REQUEST)
-                                || code.isSameCodeAs(HttpStatus.INTERNAL_SERVER_ERROR),
-                        response -> response.bodyToMono(ApiErrorResponse.class)
-                                .flatMap(error -> Mono.error(new ApiErrorException(error))))
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(ApiErrorResponse.class)
+                        .flatMap(error -> Mono.error(new ApiErrorException(error))))
                 .bodyToMono(token);
     }
 
@@ -75,10 +68,8 @@ public class WebScrapperClient extends AbstractWebClient implements ScrapperClie
                 .header(TG_CHAT_ID_HEADER, Long.toString(chatId))
                 .bodyValue(body)
                 .retrieve()
-                .onStatus(
-                        CLIENT_ERROR.or(code -> code.isSameCodeAs(HttpStatus.INTERNAL_SERVER_ERROR)),
-                        response -> response.bodyToMono(ApiErrorResponse.class)
-                                .flatMap(error -> Mono.error(new ApiErrorException(error))))
+                .onStatus(HttpStatusCode::isError, response -> response.bodyToMono(ApiErrorResponse.class)
+                        .flatMap(error -> Mono.error(new ApiErrorException(error))))
                 .bodyToMono(token);
     }
 

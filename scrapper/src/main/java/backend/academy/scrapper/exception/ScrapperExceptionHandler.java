@@ -38,4 +38,10 @@ public class ScrapperExceptionHandler extends AbstractExceptionHandler {
     public ApiErrorResponse linkNotFoundException(@NonNull final LinkNotFoundException e) {
         return collectResponse(e, "Link not found", NF_VALUE);
     }
+
+    @ExceptionHandler({AddValueException.class})
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ApiErrorResponse addValueException(@NonNull final AddValueException e) {
+        return collectResponse(e, "Add value error", NF_VALUE);
+    }
 }

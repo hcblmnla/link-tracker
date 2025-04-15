@@ -30,12 +30,12 @@ public class UntrackBotCommand implements StateCommand {
 
     @Override
     public StateResponse handleRequest(final long id, final String... args) {
-        if (args.length < 2) {
+        if (args.length < SINGLE_COMMAND_SIZE) {
             return StateResponse.ofState(BotState.MISSING_LINK);
         }
         final URI url;
         try {
-            url = new URI(args[1]);
+            url = new URI(args[SINGLE_COMMAND_INDEX]);
         } catch (final URISyntaxException e) {
             return StateResponse.ofState(BotState.MALFORMED_LINK);
         }

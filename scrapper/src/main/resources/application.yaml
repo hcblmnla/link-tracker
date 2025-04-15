@@ -16,9 +16,9 @@ spring:
     open-in-view: false
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/scrapper
-    username: postgres
-    password: postgres
+    url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/scrapper}
+    username: ${DATASOURCE_USERNAME:postgres}
+    password: ${DATASOURCE_PASSWORD:postgres}
 
 server:
   port: 8081
@@ -35,8 +35,10 @@ scheduler:
   delay: 10s
 
 update:
-  interval: 1 hour
   minutes: 60
+  message:
+    max-size: 200
+    continue-tag: "..."
 
 batch:
   size: 1000
