@@ -37,9 +37,9 @@ public class SimpleBotControllerTest implements BotTest {
         final LinkUpdate update = new LinkUpdate(1L, URL, "", List.of(3L, 4L));
 
         mockMvc.perform(post("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(update)))
-            .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk());
 
         verify(linkUpdateService, times(1)).update(update);
     }
@@ -49,9 +49,9 @@ public class SimpleBotControllerTest implements BotTest {
         final LinkUpdate update = new LinkUpdate(1L, URL, "", List.of());
 
         mockMvc.perform(post("/updates")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(update)))
-            .andExpect(status().isOk());
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk());
 
         verify(linkUpdateService, times(1)).update(update);
     }
@@ -61,6 +61,6 @@ public class SimpleBotControllerTest implements BotTest {
         final String invalidJson = "{ \"id\": 1, \"url\": [] }";
 
         mockMvc.perform(post("/updates").contentType(MediaType.APPLICATION_JSON).content(invalidJson))
-            .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest());
     }
 }
