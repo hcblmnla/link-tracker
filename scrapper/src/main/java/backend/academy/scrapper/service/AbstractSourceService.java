@@ -5,7 +5,10 @@ import backend.academy.scrapper.client.SourceClient;
 import backend.academy.scrapper.client.bot.BotClient;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.notification.digest.RedisDigestStorage;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,8 @@ public abstract class AbstractSourceService<S> {
     private final BotClient botClient;
     private final SourceClient<S> sourceClient;
 
+    private final RedisDigestStorage redisDigestStorage;
+
     private final Map<LinkDto, S> repository = new HashMap<>();
 
     @Value("${update.message.max-size}")
@@ -42,10 +47,28 @@ public abstract class AbstractSourceService<S> {
     @Value("${update.message.continue-tag}")
     private String continueTag;
 
+    @SuppressWarnings("DataFlowIssue")
     private void updateSourceLink(@NonNull final LinkDto dto, final String message) {
         final LinkUpdate update = new LinkUpdate(1L, dto.url(), message, linkService.getChatIds(dto));
         try {
-            botClient.sendUpdate(update).subscribe();
+            final List<Long> instant = new ArrayList<>();
+            final List<Long> digest = new ArrayList<>();
+
+            update.chatIds().forEach(chatId -> {
+                switch (linkService.getMode(chatId)) {
+                    case INSTANT -> instant.add(chatId);
+                    case DIGEST -> digest.add(chatId);
+
+                    default -> log.atInfo()
+                            .addKeyValue("chatId", chatId)
+                            .setMessage("Got null mode")
+                            .log();
+                }
+            });
+
+            botClient.sendUpdate(update.updateChatIds(instant)).subscribe();
+            redisDigestStorage.waitUpdate(update.updateChatIds(digest));
+
             log.atInfo().setMessage("Updated link").addKeyValue("dto", dto).log();
         } catch (final Exception e) {
             logError("Error updating link", e);

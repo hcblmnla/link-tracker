@@ -9,6 +9,7 @@ import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.base.schema.scrapper.ListLinksResponse;
 import backend.academy.base.schema.scrapper.RemoveLinkRequest;
 import backend.academy.base.schema.scrapper.TagsResponse;
+import backend.academy.bot.link.service.NotificationMode;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +43,16 @@ public class WebScrapperClient extends AbstractWebClient implements ScrapperClie
     @Override
     public Mono<Void> deleteChat(final long id) {
         return moveChat(id, HttpMethod.DELETE);
+    }
+
+    @Override
+    public Mono<Void> setMode(final long chatId, @NonNull final NotificationMode mode) {
+        return webClient
+                .post()
+                .uri(mode.toUri())
+                .header(TG_CHAT_ID_HEADER, Long.toString(chatId))
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 
     private <T> Mono<T> getListOf(final long chatId, final String uri, final Class<T> token) {

@@ -3,6 +3,7 @@ package backend.academy.scrapper.link.service.sql;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.exception.AddValueException;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.notification.NotificationMode;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.net.URI;
 import java.util.List;
@@ -61,6 +62,15 @@ public class SqlLinkService implements LinkService {
     @Transactional
     public void registerChat(final long id) {
         jdbc.update("insert into users values (?) on conflict do nothing", id);
+
+        final String modeSql =
+                """
+            insert into notification_modes (chat_id)
+            values (?)
+            on conflict do nothing
+            """;
+
+        jdbc.update(modeSql, id);
     }
 
     @Override
@@ -68,6 +78,23 @@ public class SqlLinkService implements LinkService {
     public boolean deleteChat(final long id) {
         final int deleted = jdbc.update("delete from users where id = ?", id);
         return deleted > 0;
+    }
+
+    @Override
+    @Nullable
+    public NotificationMode getMode(final long chatId) {
+        final String sql = "select mode from notification_modes where chat_id = ?";
+        return jdbc.query(
+                sql,
+                rs -> rs.next() ? NotificationMode.valueOf(rs.getString("mode")) : NotificationMode.INSTANT,
+                chatId);
+    }
+
+    @Override
+    @Transactional
+    public void setMode(final long chatId, @NonNull final NotificationMode mode) {
+        final String sql = "update notification_modes set mode = ? where chat_id = ?";
+        jdbc.update(sql, mode.name(), chatId);
     }
 
     @Override

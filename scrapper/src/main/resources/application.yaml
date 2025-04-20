@@ -4,6 +4,13 @@ app:
     key: ${SO_TOKEN_KEY}
     access-token: ${SO_ACCESS_TOKEN}
   access-type: SQL
+  message-transport: HTTP # {HTTP, Kafka}
+
+kafka:
+  topic-name: link-updates
+  partitions: 1
+  replicas: 1
+  bootstrap-servers: ${KAFKA_URL:localhost:9092}
 
 spring:
   application:
@@ -19,6 +26,13 @@ spring:
     url: ${DATASOURCE_URL:jdbc:postgresql://localhost:5432/scrapper}
     username: ${DATASOURCE_USERNAME:postgres}
     password: ${DATASOURCE_PASSWORD:postgres}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    admin:
+      auto-create: false
 
 server:
   port: 8081
@@ -44,6 +58,13 @@ batch:
   size: 1000
   threads: 4
   awaiting: 1
+
+notification:
+  time:
+    hours:
+      10
+    minutes:
+      0
 
 logging.structured.format.file: ecs
 logging.file.name: log.json

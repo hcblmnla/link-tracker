@@ -10,5 +10,6 @@
     <include relativeToChangelogFile="true" file="sql/00-users-links.sql"/>
     <include relativeToChangelogFile="true" file="sql/01-links-view.sql"/>
     <include relativeToChangelogFile="true" file="sql/02-user-tags.sql"/>
+    <include relativeToChangelogFile="true" file="sql/10-notification-modes.sql"/>
 
 </databaseChangeLog>

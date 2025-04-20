@@ -35,17 +35,11 @@ public class BotMessageSender {
     private final BotService service;
 
     private final Map<Long, StateCommand> currentHandlers = new HashMap<>();
-    private final NotificationConfig notificationConfig;
 
-    public BotMessageSender(
-            final TelegramBot bot,
-            final BotCommandLoader commandLoader,
-            final BotService service,
-            final NotificationConfig notificationConfig) {
+    public BotMessageSender(final TelegramBot bot, final BotCommandLoader commandLoader, final BotService service) {
         this.bot = bot;
         this.commands = commandLoader.knownCommands();
         this.service = service;
-        this.notificationConfig = notificationConfig;
     }
 
     @PostConstruct
@@ -53,12 +47,17 @@ public class BotMessageSender {
         bot.execute(new SetMyCommands(
                 commands.values().stream().map(StateCommand::asBotCommand).toArray(BotCommand[]::new)));
 
-        bot.setUpdatesListener(updates -> {
-            for (final Update update : updates) {
-                handleUpdate(update);
-            }
-            return UpdatesListener.CONFIRMED_UPDATES_ALL;
-        });
+        bot.setUpdatesListener(
+                updates -> {
+                    for (final Update update : updates) {
+                        handleUpdate(update);
+                    }
+                    return UpdatesListener.CONFIRMED_UPDATES_ALL;
+                },
+                e -> log.atWarn()
+                        .setCause(e)
+                        .setMessage("Pengrad listener failure")
+                        .log());
     }
 
     public void sendMessage(final long chatId, final String message) {
@@ -78,9 +77,7 @@ public class BotMessageSender {
     }
 
     public void sendUpdate(final long chatId, final URI url, final String description) {
-        // :NOTE: remove
-        final String prefix = notificationConfig.mode().name().toLowerCase();
-        sendMessage(chatId, "[%s] Обновление на %s%n%s".formatted(prefix, url, description));
+        sendMessage(chatId, "Обновление на %s%n%s".formatted(url, description));
     }
 
     public void handleUpdate(@NonNull final Update update) {

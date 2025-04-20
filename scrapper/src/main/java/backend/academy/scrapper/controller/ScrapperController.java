@@ -34,6 +34,9 @@ public interface ScrapperController {
 
     String TAGS_URI = "/tags";
 
+    String INSTANT_MODE_URI = "/instant";
+    String DIGEST_URI = "/digest";
+
     @Operation(summary = "Зарегистрировать чат")
     @ApiResponses(
             value = {
@@ -70,6 +73,36 @@ public interface ScrapperController {
             })
     @DeleteMapping(TG_CHAT_URI)
     void deleteChat(@PathVariable(ID_VAR) @Positive Long id);
+
+    @Operation(summary = "Установить режим дайджеста")
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "200", description = "Режим успешно установлен"),
+                @ApiResponse(
+                        responseCode = "400",
+                        description = "Некорректные параметры запроса",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+            })
+    @PostMapping(DIGEST_URI)
+    void setDigest(@RequestHeader(TG_CHAT_ID_HEADER) @Positive Long id);
+
+    @Operation(summary = "Установить режим отправки сразу")
+    @ApiResponses(
+            value = {
+                @ApiResponse(responseCode = "200", description = "Режим успешно установлен"),
+                @ApiResponse(
+                        responseCode = "400",
+                        description = "Некорректные параметры запроса",
+                        content =
+                                @Content(
+                                        mediaType = MediaType.APPLICATION_JSON_VALUE,
+                                        schema = @Schema(implementation = ApiErrorResponse.class)))
+            })
+    @PostMapping(INSTANT_MODE_URI)
+    void setInstantMode(@RequestHeader(TG_CHAT_ID_HEADER) @Positive Long id);
 
     @Operation(summary = "Получить теги")
     @ApiResponses(

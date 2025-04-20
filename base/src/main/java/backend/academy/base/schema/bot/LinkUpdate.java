@@ -10,4 +10,9 @@ public record LinkUpdate(
         @JsonProperty("id") @Positive(message = "id should be positive") Long id,
         @JsonProperty("url") @NotNull(message = "url cannot be null") URI url,
         @JsonProperty("description") String description,
-        @JsonProperty("tgChatIds") List<Long> chatIds) {}
+        @JsonProperty("tgChatIds") List<Long> chatIds) {
+
+    public LinkUpdate updateChatIds(final List<Long> chatIds) {
+        return new LinkUpdate(id, url, description, chatIds);
+    }
+}

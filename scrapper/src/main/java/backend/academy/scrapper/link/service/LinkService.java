@@ -1,6 +1,7 @@
 package backend.academy.scrapper.link.service;
 
 import backend.academy.scrapper.dto.LinkDto;
+import backend.academy.scrapper.notification.NotificationMode;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,6 +26,14 @@ public interface LinkService {
 
     @Transactional
     boolean deleteChat(long id);
+
+    @Nullable
+    default NotificationMode getMode(final long chatId) {
+        return NotificationMode.INSTANT;
+    }
+
+    @Transactional
+    default void setMode(final long chatId, @NonNull final NotificationMode mode) {}
 
     List<String> getTags(long id);
 

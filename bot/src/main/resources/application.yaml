@@ -1,5 +1,14 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN} # env variable
+  message-transport: Kafka # {HTTP, Kafka}
+
+kafka:
+  topic-name: link-updates
+  dlq-topic-name: link-updates-dlt
+  dlq-partitions: 1
+  dlq-replicas: 1
+  bootstrap-servers: ${KAFKA_URL:localhost:9092}
+  group-id: message-group
 
 spring:
   application:
@@ -10,6 +19,20 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: 1h
+      cache-null-values: false
+      key-prefix: "bot:"
+      use-key-prefix: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    admin:
+      auto-create: false
 
 server:
   port: 8080
@@ -33,7 +56,3 @@ descriptions:
   tags: "возвращает лист тегов"
   digest: "режим уведомлений – дайджест раз в сутки (10-00)"
   instant: "режим уведомлений – сразу"
-
-notification:
-  mode:
-    INSTANT

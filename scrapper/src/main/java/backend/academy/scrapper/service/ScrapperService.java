@@ -5,6 +5,7 @@ import backend.academy.base.schema.scrapper.AddTagRequest;
 import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.notification.NotificationMode;
 import backend.academy.scrapper.service.github.GitHubSourceService;
 import backend.academy.scrapper.service.stackoverflow.StackOverflowSourceService;
 import java.net.URI;
@@ -99,6 +100,10 @@ public class ScrapperService {
                     .log();
         }
         return deleted;
+    }
+
+    public void setMode(final long id, final NotificationMode mode) {
+        linkService.setMode(id, mode);
     }
 
     public List<String> getTags(final long id) {

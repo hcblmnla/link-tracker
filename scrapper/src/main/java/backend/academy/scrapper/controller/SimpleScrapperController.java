@@ -9,6 +9,7 @@ import backend.academy.base.schema.scrapper.TagsResponse;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.exception.ChatNotExistsException;
 import backend.academy.scrapper.exception.LinkNotFoundException;
+import backend.academy.scrapper.notification.NotificationMode;
 import backend.academy.scrapper.service.ScrapperService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,16 @@ public class SimpleScrapperController implements ScrapperController {
         if (!service.deleteChat(id)) {
             throw new ChatNotExistsException(id);
         }
+    }
+
+    @Override
+    public void setDigest(final Long id) {
+        service.setMode(id, NotificationMode.DIGEST);
+    }
+
+    @Override
+    public void setInstantMode(final Long id) {
+        service.setMode(id, NotificationMode.INSTANT);
     }
 
     @Override

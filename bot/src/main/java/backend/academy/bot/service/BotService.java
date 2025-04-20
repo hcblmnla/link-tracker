@@ -8,7 +8,7 @@ import backend.academy.base.schema.scrapper.ListLinksResponse;
 import backend.academy.base.schema.scrapper.RemoveLinkRequest;
 import backend.academy.base.schema.scrapper.TagsResponse;
 import backend.academy.bot.client.ScrapperClient;
-import backend.academy.bot.sender.NotificationConfig;
+import backend.academy.bot.link.service.NotificationMode;
 import backend.academy.bot.service.exception.AddTagServiceException;
 import backend.academy.bot.service.exception.DeletingChatServiceException;
 import backend.academy.bot.service.exception.LinksServiceException;
@@ -22,6 +22,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.spi.LoggingEventBuilder;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -30,7 +32,6 @@ import org.springframework.stereotype.Service;
 public class BotService {
 
     private final ScrapperClient client;
-    private final NotificationConfig notificationConfig;
 
     public void registerChat(final long id) {
         client.registerChat(id).block();
@@ -48,15 +49,16 @@ public class BotService {
     }
 
     public void setDigest(final long id) {
-        notificationConfig.mode(NotificationConfig.Mode.DIGEST);
+        client.setMode(id, NotificationMode.DIGEST).block();
         logInfo("Set digest", id);
     }
 
     public void setInstantMode(final long id) {
-        notificationConfig.mode(NotificationConfig.Mode.INSTANT);
+        client.setMode(id, NotificationMode.INSTANT).block();
         logInfo("Set instant mode", id);
     }
 
+    @Cacheable(value = "tags", key = "#id")
     public List<String> getTags(final long id) throws TagsServiceException {
         final TagsResponse response;
         try {
@@ -72,6 +74,7 @@ public class BotService {
         return response.tags();
     }
 
+    @CacheEvict(value = "tags", key = "#id")
     public void addTag(final long id, @NonNull final String tag) throws AddTagServiceException {
         try {
             client.addTag(id, new AddTagRequest(tag)).block();
@@ -82,6 +85,7 @@ public class BotService {
         }
     }
 
+    @Cacheable(value = "links", key = "#id")
     public List<LinkResponse> getLinks(final long id) throws LinksServiceException {
         final ListLinksResponse response;
         try {
@@ -99,6 +103,7 @@ public class BotService {
         return links;
     }
 
+    @CacheEvict(value = "links", key = "#id")
     public void addLink(final long id, @NonNull final TrackingLink link) throws TrackServiceException {
         final String logLink = link.url().toString();
         try {
@@ -113,6 +118,7 @@ public class BotService {
         }
     }
 
+    @CacheEvict(value = "links", key = "#id")
     public LinkResponse removeLink(final long id, final URI url) throws UntrackServiceException {
         try {
             final LinkResponse response =

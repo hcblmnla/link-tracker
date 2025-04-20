@@ -6,6 +6,7 @@ import backend.academy.scrapper.date.PrettyDateTime;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.dto.github.GitHubActivity;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.notification.digest.RedisDigestStorage;
 import backend.academy.scrapper.service.AbstractSourceService;
 import backend.academy.scrapper.service.filter.FilterUtils;
 import org.springframework.stereotype.Service;
@@ -19,8 +20,11 @@ public class GitHubSourceService extends AbstractSourceService<GitHubActivity> {
     private static final String PULL = "pull request";
 
     public GitHubSourceService(
-            final LinkService linkService, final BotClient botClient, final SourceClient<GitHubActivity> sourceClient) {
-        super(linkService, botClient, sourceClient);
+            final LinkService linkService,
+            final BotClient botClient,
+            final SourceClient<GitHubActivity> sourceClient,
+            final RedisDigestStorage redisDigestStorage) {
+        super(linkService, botClient, sourceClient, redisDigestStorage);
     }
 
     @Override

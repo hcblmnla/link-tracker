@@ -2,55 +2,84 @@ package backend.academy.scrapper.validation;
 
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.exception.UnsupportedLinkException;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @Getter
-@SuppressWarnings("ImmutableEnumChecker")
-@SuppressFBWarnings("REDOS") // regex :(
 public enum LinkType {
-    // :NOTE: remove and use host name from URI maybe
-    GITHUB(Pattern.compile("^(?:https?://)?github\\.com/([a-zA-Z0-9_-]+)/([a-zA-Z0-9_-]+)/?$"), 1, 2),
-    STACKOVERFLOW(Pattern.compile("^(?:https?://)?stackoverflow\\.com/questions/(\\d+)(?:/[a-zA-Z0-9_-]+)?/?$"), 1);
-
-    private static final Map<Pattern, LinkType> PATTERNS =
-            Arrays.stream(values()).collect(Collectors.toMap(LinkType::pattern, Function.identity()));
-
-    private final Pattern pattern;
-    private final int[] uriIndices;
-
-    LinkType(final Pattern pattern, final int... uriIndices) {
-        this.pattern = pattern;
-        this.uriIndices = uriIndices;
-    }
-
-    private static LinkType getLinkType(final URI url) {
-        final String link = url.toString();
-        return PATTERNS.entrySet().stream()
-                .filter(entry -> entry.getKey().matcher(link).matches())
-                .map(Map.Entry::getValue)
-                .findFirst()
-                .orElseThrow(() -> new UnsupportedLinkException(url));
-    }
-
-    public static LinkDto parseAndGetDto(final URI url, final List<String> tags, final List<String> filters) {
-        final LinkType type = getLinkType(url);
-        final Matcher matcher = type.pattern.matcher(url.toString());
-
-        if (!matcher.matches()) {
-            throw new UnsupportedLinkException(url);
+    GITHUB("github.com") {
+        @Override
+        public String[] extractUriVariables(final URI uri) {
+            final String[] parts = trimAndSplitPath(uri, 2);
+            if (parts.length < 2) {
+                throw new UnsupportedLinkException(uri);
+            }
+            return parts;
         }
+    },
+    STACKOVERFLOW("stackoverflow.com") {
+        @Override
+        public String[] extractUriVariables(final URI uri) {
+            final String[] parts = trimAndSplitPath(uri, 3);
+            if (parts.length < 3 || !QUESTIONS_SEGMENT.equals(parts[0])) {
+                throw new UnsupportedLinkException(uri);
+            }
+            return new String[] {parts[1]};
+        }
+    };
 
-        final String[] uriVariables =
-                Arrays.stream(type.uriIndices).mapToObj(matcher::group).toArray(String[]::new);
-        return new LinkDto(url, tags, filters, type, uriVariables);
+    private static final String QUESTIONS_SEGMENT = "questions";
+    private static final String HTTPS_PREFIX = "https://";
+
+    private static final Pattern PATH_SPLITTER = Pattern.compile("/");
+
+    private final String host;
+
+    public abstract String[] extractUriVariables(URI uri);
+
+    private static String[] trimAndSplitPath(final URI uri, final int maxParts) {
+        final String path = uri.getPath();
+        if (path == null || path.isEmpty()) {
+            throw new UnsupportedLinkException(uri);
+        }
+        return PATH_SPLITTER
+                .splitAsStream(path)
+                .filter(part -> !part.isBlank())
+                .limit(maxParts)
+                .toArray(String[]::new);
+    }
+
+    public static LinkDto parseAndGetDto(final URI rawUrl, final List<String> tags, final List<String> filters) {
+        final URI normalizedUrl = normalizeUri(rawUrl);
+        final LinkType type = getLinkType(normalizedUrl);
+        return new LinkDto(normalizedUrl, tags, filters, type, type.extractUriVariables(normalizedUrl));
+    }
+
+    private static URI normalizeUri(URI uri) {
+        if (uri.getScheme() == null) {
+            try {
+                return new URI(HTTPS_PREFIX + uri);
+            } catch (URISyntaxException ignored) {
+                throw new UnsupportedLinkException(uri);
+            }
+        }
+        return uri;
+    }
+
+    private static LinkType getLinkType(URI uri) {
+        final String host = uri.getHost();
+        if (host == null) {
+            throw new UnsupportedLinkException(uri);
+        }
+        return Arrays.stream(values())
+                .filter(type -> host.equalsIgnoreCase(type.host))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedLinkException(uri));
     }
 }

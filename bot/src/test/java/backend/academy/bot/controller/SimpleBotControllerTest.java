@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import backend.academy.base.schema.bot.LinkUpdate;
 import backend.academy.bot.BotTest;
+import backend.academy.bot.kafka.EnabledKafkaTest;
 import backend.academy.bot.link.service.LinkUpdateService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -21,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @ExtendWith(SpringExtension.class)
 @WebMvcTest(SimpleBotController.class)
-public class SimpleBotControllerTest implements BotTest {
+public class SimpleBotControllerTest extends EnabledKafkaTest implements BotTest {
 
     @MockitoBean
     private LinkUpdateService linkUpdateService;
