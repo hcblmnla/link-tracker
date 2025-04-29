@@ -20,7 +20,7 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
-@ConditionalOnProperty(prefix = "app", name = "message-transport", havingValue = "Kafka")
+@ConditionalOnProperty(prefix = "app.message-transport", name = "kafka", havingValue = "true")
 @ConfigurationProperties(prefix = "kafka")
 public record KafkaConfig(
         @NotBlank String topicName,

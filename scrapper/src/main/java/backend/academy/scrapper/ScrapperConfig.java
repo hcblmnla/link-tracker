@@ -12,7 +12,9 @@ public record ScrapperConfig(
         @NotEmpty String githubToken,
         @NotNull StackOverflowCredentials stackOverflow,
         @NotBlank String accessType,
-        @NotBlank String messageTransport) {
+        @NotNull MessageTransport messageTransport) {
 
     public record StackOverflowCredentials(@NotEmpty String key, @NotEmpty String accessToken) {}
+
+    public record MessageTransport(boolean http, boolean kafka, @NotBlank String fallback) {}
 }

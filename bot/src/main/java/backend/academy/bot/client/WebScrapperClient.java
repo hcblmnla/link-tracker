@@ -9,7 +9,9 @@ import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.base.schema.scrapper.ListLinksResponse;
 import backend.academy.base.schema.scrapper.RemoveLinkRequest;
 import backend.academy.base.schema.scrapper.TagsResponse;
+import backend.academy.bot.client.config.ClientConfig;
 import backend.academy.bot.link.service.NotificationMode;
+import io.github.resilience4j.ratelimiter.RateLimiter;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +23,18 @@ import reactor.core.publisher.Mono;
 @Component
 public class WebScrapperClient extends AbstractWebClient implements ScrapperClient {
 
-    public WebScrapperClient(@Value("${server.base-url}") final String baseUrl) {
-        super(baseUrl);
+    public WebScrapperClient(
+            @Value("${server.base-url}") final String baseUrl,
+            final ClientConfig clientConfig,
+            final RateLimiter ipRateLimiter) {
+        super(
+                baseUrl,
+                clientConfig.timeout(),
+                clientConfig.retry().maxAttempts(),
+                clientConfig.retry().minBackoff(),
+                clientConfig.retry().retryableStatuses(),
+                clientConfig.configuredCB(),
+                ipRateLimiter);
     }
 
     private Mono<Void> moveChat(final long id, final HttpMethod method) {

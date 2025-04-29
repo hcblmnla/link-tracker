@@ -9,7 +9,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
-@ConditionalOnProperty(prefix = "app", name = "message-transport", havingValue = "HTTP")
+@ConditionalOnProperty(prefix = "app.message-transport", name = "http", havingValue = "true")
 @RequiredArgsConstructor
 public class HttpLinkUpdateService implements LinkUpdateService {
 

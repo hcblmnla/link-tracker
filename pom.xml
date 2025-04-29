@@ -39,6 +39,7 @@
 
         <java-telegram-bot-api.version>7.11.0</java-telegram-bot-api.version>
         <wiremock.version>3.10.0</wiremock.version>
+        <resilience4j-spring-boot2.version>2.1.0</resilience4j-spring-boot2.version>
 
         <!-- annotations -->
         <jetbrains-annotations.version>26.0.1</jetbrains-annotations.version>

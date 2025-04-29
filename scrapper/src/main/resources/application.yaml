@@ -4,7 +4,10 @@ app:
     key: ${SO_TOKEN_KEY}
     access-token: ${SO_ACCESS_TOKEN}
   access-type: SQL
-  message-transport: HTTP # {HTTP, Kafka}
+  message-transport:
+    http: true
+    kafka: false
+    fallback: none # {HTTP, Kafka, none}
 
 kafka:
   topic-name: link-updates
@@ -40,6 +43,30 @@ server:
   github-base: https://api.github.com/repos
   stackoverflow-base: https://api.stackexchange.com/2.3/questions
 
+client:
+  timeout: 10s
+  retry:
+    max-attempts: 5
+    min-backoff: 2s
+    retryable-statuses:
+      - 500
+      - 502
+      - 503
+      - 504
+  cb:
+    sliding-window-size: 1
+    minimum-required-calls: 1
+    failure-rate-threshold: 100  # OPEN
+    permitted-calls-in-half-open-state: 1
+    wait-duration-in-open-state: 1s
+    name: web-client-circuit-breaker
+
+rate-limit:
+  for-period: 10
+  refresh-period: 1s
+  timeout: 500ms
+  rate-limiter: ip-based-rate-limiter
+
 springdoc:
   swagger-ui:
     enabled: true
@@ -56,7 +83,7 @@ update:
 
 batch:
   size: 1000
-  threads: 4
+  threads: 1
   awaiting: 1
 
 notification:
