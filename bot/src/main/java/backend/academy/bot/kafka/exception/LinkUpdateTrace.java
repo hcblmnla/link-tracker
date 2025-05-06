@@ -1,4 +1,4 @@
-package backend.academy.bot.service.kafka.exception;
+package backend.academy.bot.kafka.exception;
 
 import backend.academy.base.schema.bot.LinkUpdate;
 import java.util.List;

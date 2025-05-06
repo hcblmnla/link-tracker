@@ -1,11 +1,10 @@
-package backend.academy.bot.config;
+package backend.academy.bot.config.kafka;
 
 import backend.academy.base.schema.bot.LinkUpdate;
+import backend.academy.bot.kafka.LinkUpdateKafkaListener;
+import backend.academy.bot.kafka.exception.KafkaErrorHandler;
+import backend.academy.bot.kafka.exception.LinkUpdateTrace;
 import backend.academy.bot.link.service.LinkUpdateService;
-import backend.academy.bot.service.kafka.LinkUpdateKafkaListener;
-import backend.academy.bot.service.kafka.exception.KafkaErrorHandler;
-import backend.academy.bot.service.kafka.exception.LinkUpdateTrace;
-import jakarta.validation.Validator;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
@@ -14,7 +13,6 @@ import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -24,9 +22,7 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaAdmin;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -38,7 +34,14 @@ public record KafkaConfig(
         @NotNull Integer dlqPartitions,
         @NotNull Integer dlqReplicas,
         @NotBlank String bootstrapServers,
-        @NotBlank String groupId) {
+        @NotBlank String groupId,
+        @NotNull Class<?> keyDeserializer,
+        @NotNull Class<?> valueDeserializer,
+        @NotNull Class<?> keySerializer,
+        @NotNull Class<?> valueSerializer) {
+
+    public static final String CONTAINER_FACTORY = "linkUpdateKafkaListenerContainerFactory";
+    public static final String ERROR_HANDLER = "kafkaErrorHandler";
 
     @Bean
     public KafkaAdmin admin() {
@@ -46,18 +49,18 @@ public record KafkaConfig(
     }
 
     @Bean
-    public LinkUpdateKafkaListener linkUpdateKafkaListener(
-            final LinkUpdateService linkUpdateService,
-            final KafkaTemplate<String, LinkUpdateTrace> dlq,
-            final Validator validator) {
-        return new LinkUpdateKafkaListener(linkUpdateService, dlq, validator, dlqTopicName);
+    public LinkUpdateKafkaListener linkUpdateKafkaListener(final LinkUpdateService linkUpdateService) {
+        return new LinkUpdateKafkaListener(linkUpdateService);
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, LinkUpdate> linkUpdateKafkaListenerContainerFactory(
-            final CommonErrorHandler commonErrorHandler) {
+    public ConcurrentKafkaListenerContainerFactory<String, LinkUpdate> linkUpdateKafkaListenerContainerFactory() {
         final ConcurrentKafkaListenerContainerFactory<String, LinkUpdate> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
+
+        final JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
+        deserializer.addTrustedPackages("backend.academy.base.schema.bot");
+        deserializer.setUseTypeMapperForKey(false);
 
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(
                 Map.of(
@@ -66,13 +69,11 @@ public record KafkaConfig(
                         ConsumerConfig.GROUP_ID_CONFIG,
                         groupId,
                         ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
-                        StringDeserializer.class,
+                        keyDeserializer,
                         ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                        JsonDeserializer.class),
+                        valueDeserializer),
                 new StringDeserializer(),
-                new JsonDeserializer<>(LinkUpdate.class)));
-
-        factory.setCommonErrorHandler(commonErrorHandler);
+                deserializer));
 
         return factory;
     }
@@ -86,8 +87,8 @@ public record KafkaConfig(
     public KafkaTemplate<String, LinkUpdateTrace> dlqKafkaTemplate() {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(Map.of(
                 ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers,
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class)));
+                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer,
+                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, valueSerializer)));
     }
 
     @Bean

@@ -2,7 +2,7 @@ package backend.academy.bot;
 
 import backend.academy.bot.client.config.ClientConfig;
 import backend.academy.bot.client.config.RateLimitConfig;
-import backend.academy.bot.config.KafkaConfig;
+import backend.academy.bot.config.kafka.KafkaConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

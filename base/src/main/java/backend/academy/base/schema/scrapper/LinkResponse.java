@@ -1,6 +1,7 @@
 package backend.academy.base.schema.scrapper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.List;
 
@@ -8,7 +9,8 @@ public record LinkResponse(
         @JsonProperty("id") Long id,
         @JsonProperty("url") URI url,
         @JsonProperty("tags") List<String> tags,
-        @JsonProperty("filters") List<String> filters) {
+        @JsonProperty("filters") List<String> filters)
+        implements Serializable {
 
     @Override
     public String toString() {

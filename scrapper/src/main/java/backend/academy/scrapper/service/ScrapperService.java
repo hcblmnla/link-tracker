@@ -5,6 +5,7 @@ import backend.academy.base.schema.scrapper.AddTagRequest;
 import backend.academy.base.schema.scrapper.LinkResponse;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.metrics.LinksGaugeService;
 import backend.academy.scrapper.notification.NotificationMode;
 import backend.academy.scrapper.service.github.GitHubSourceService;
 import backend.academy.scrapper.service.stackoverflow.StackOverflowSourceService;
@@ -30,6 +31,8 @@ public class ScrapperService {
 
     private final GitHubSourceService gitHubService;
     private final StackOverflowSourceService stackOverflowService;
+
+    private final LinksGaugeService linksGaugeService;
 
     @Value("${batch.size}")
     private int batchSize;
@@ -69,19 +72,20 @@ public class ScrapperService {
     public void checkForUpdate() {
         if (threads == 1) {
             checkForUpdateImpl(this::checkForUpdate);
-            return;
-        }
-        try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
-            checkForUpdateImpl(linkDto -> {
-                final Future<?> ignored = executor.submit(() -> checkForUpdate(linkDto));
-            });
-            executor.shutdown();
-            if (!executor.awaitTermination(awaiting, TimeUnit.MINUTES)) {
-                log.error("Timed out waiting for update checking");
+        } else {
+            try (ExecutorService executor = Executors.newFixedThreadPool(threads)) {
+                checkForUpdateImpl(linkDto -> {
+                    final Future<?> ignored = executor.submit(() -> checkForUpdate(linkDto));
+                });
+                executor.shutdown();
+                if (!executor.awaitTermination(awaiting, TimeUnit.MINUTES)) {
+                    log.error("Timed out waiting for update checking");
+                }
+            } catch (InterruptedException e) {
+                log.error("Interrupted while checking for update", e);
             }
-        } catch (InterruptedException e) {
-            log.error("Interrupted while checking for update", e);
         }
+        linksGaugeService.updateLinks(gitHubService.getAmountOfLinks(), stackOverflowService.getAmountOfLinks());
     }
 
     public void registerChat(final long id) {

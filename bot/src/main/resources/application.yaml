@@ -9,6 +9,10 @@ kafka:
   dlq-replicas: 1
   bootstrap-servers: ${KAFKA_URL:localhost:9092}
   group-id: message-group
+  key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+  key-serializer: org.apache.kafka.common.serialization.StringSerializer
+  value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 spring:
   application:
@@ -33,6 +37,11 @@ spring:
   kafka:
     admin:
       auto-create: false
+    consumer:
+      properties:
+        spring.json.type.mapping: >
+          LinkUpdate: backend.academy.base.schema.bot.LinkUpdate
+        spring.json.trusted.packages: backend.academy.base.schema.bot
 
 server:
   port: 8080
@@ -80,3 +89,18 @@ descriptions:
   tags: "возвращает лист тегов"
   digest: "режим уведомлений – дайджест раз в сутки (10-00)"
   instant: "режим уведомлений – сразу"
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: health, info, prometheus
+      path-mapping:
+        prometheus:
+          /metrics
+  server:
+    port: 8090

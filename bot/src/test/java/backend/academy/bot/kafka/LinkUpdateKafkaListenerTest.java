@@ -1,26 +1,34 @@
 package backend.academy.bot.kafka;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import backend.academy.base.schema.bot.LinkUpdate;
 import backend.academy.bot.BotTest;
+import backend.academy.bot.kafka.exception.KafkaErrorHandler;
 import backend.academy.bot.link.service.LinkUpdateService;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest
 @TestPropertySource(properties = "app.message-transport=Kafka")
+@Import(KafkaTestConfig.class)
 public class LinkUpdateKafkaListenerTest extends EnabledKafkaTest implements BotTest {
 
     @MockitoBean
     private LinkUpdateService linkUpdateService;
+
+    @MockitoBean
+    private KafkaErrorHandler errorHandler;
 
     @Autowired
     private KafkaTemplate<String, LinkUpdate> scrapperKafkaTemplate;
@@ -44,6 +52,7 @@ public class LinkUpdateKafkaListenerTest extends EnabledKafkaTest implements Bot
         sendToKafka(update);
         // then
         verifyNoInteractions(linkUpdateService);
+        verify(errorHandler).handleError(any(), any(), any(), eq(null));
     }
 
     @Test
@@ -52,6 +61,7 @@ public class LinkUpdateKafkaListenerTest extends EnabledKafkaTest implements Bot
         sendToKafka(null);
         // then
         verifyNoInteractions(linkUpdateService);
+        verify(errorHandler).handleError(any(), any(), any(), eq(null));
     }
 
     @SneakyThrows

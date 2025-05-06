@@ -1,4 +1,4 @@
-package backend.academy.scrapper.service.filter;
+package backend.academy.scrapper.util;
 
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.dto.github.GitHubActivity;

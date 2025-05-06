@@ -2,13 +2,14 @@ package backend.academy.scrapper.service.github;
 
 import backend.academy.scrapper.client.SourceClient;
 import backend.academy.scrapper.client.bot.BotClient;
-import backend.academy.scrapper.date.PrettyDateTime;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.dto.github.GitHubActivity;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.metrics.LinksScrapeTimerService;
 import backend.academy.scrapper.notification.digest.RedisDigestStorage;
 import backend.academy.scrapper.service.AbstractSourceService;
-import backend.academy.scrapper.service.filter.FilterUtils;
+import backend.academy.scrapper.util.FilterUtils;
+import backend.academy.scrapper.util.PrettyDateTime;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,8 +24,9 @@ public class GitHubSourceService extends AbstractSourceService<GitHubActivity> {
             final LinkService linkService,
             final BotClient botClient,
             final SourceClient<GitHubActivity> sourceClient,
-            final RedisDigestStorage redisDigestStorage) {
-        super(linkService, botClient, sourceClient, redisDigestStorage);
+            final RedisDigestStorage redisDigestStorage,
+            final LinksScrapeTimerService scrapeTimerService) {
+        super(linkService, botClient, sourceClient, redisDigestStorage, scrapeTimerService);
     }
 
     @Override

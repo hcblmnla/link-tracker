@@ -5,11 +5,13 @@ import backend.academy.scrapper.client.SourceClient;
 import backend.academy.scrapper.client.bot.BotClient;
 import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.link.service.LinkService;
+import backend.academy.scrapper.metrics.LinksScrapeTimerService;
 import backend.academy.scrapper.notification.digest.RedisDigestStorage;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
@@ -40,6 +42,9 @@ public abstract class AbstractSourceService<S> {
     private final RedisDigestStorage redisDigestStorage;
 
     private final Map<LinkDto, S> repository = new HashMap<>();
+    private final AtomicInteger counter = new AtomicInteger();
+
+    private final LinksScrapeTimerService scrapeTimerService;
 
     @Value("${update.message.max-size}")
     private int maxBodySize;
@@ -75,10 +80,17 @@ public abstract class AbstractSourceService<S> {
         }
     }
 
+    public int getAmountOfLinks() {
+        return counter.getAndSet(0);
+    }
+
     public boolean checkForUpdate(@NonNull final LinkDto dto) {
+        counter.incrementAndGet();
         final S nextActivity;
         try {
-            nextActivity = sourceClient.fetchUpdate(dto.uriVariables()).blockFirst();
+            nextActivity = scrapeTimerService.recordScrape(
+                    dto.type(),
+                    () -> sourceClient.fetchUpdate(dto.uriVariables()).blockFirst());
         } catch (final Exception e) {
             logError("Error checking for update", e);
             return false;

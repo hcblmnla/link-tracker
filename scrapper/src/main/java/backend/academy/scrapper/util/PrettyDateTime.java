@@ -1,4 +1,4 @@
-package backend.academy.scrapper.date;
+package backend.academy.scrapper.util;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;

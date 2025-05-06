@@ -13,6 +13,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.SendResponse;
+import io.micrometer.core.instrument.Counter;
 import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.util.HashMap;
@@ -36,10 +37,17 @@ public class BotMessageSender {
 
     private final Map<Long, StateCommand> currentHandlers = new HashMap<>();
 
-    public BotMessageSender(final TelegramBot bot, final BotCommandLoader commandLoader, final BotService service) {
+    private final Counter userMessagesCounter;
+
+    public BotMessageSender(
+            final TelegramBot bot,
+            final BotCommandLoader commandLoader,
+            final BotService service,
+            final Counter userMessagesCounter) {
         this.bot = bot;
         this.commands = commandLoader.knownCommands();
         this.service = service;
+        this.userMessagesCounter = userMessagesCounter;
     }
 
     @PostConstruct
@@ -86,6 +94,9 @@ public class BotMessageSender {
             log.atInfo().addKeyValue("update", update).log("Got null message on update");
             return;
         }
+
+        userMessagesCounter.increment();
+
         final String[] text = TEXT_SPLITTER.split(message.text());
         final long chatId = message.chat().id();
 

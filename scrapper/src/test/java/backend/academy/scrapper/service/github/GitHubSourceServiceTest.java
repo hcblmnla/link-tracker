@@ -2,10 +2,16 @@ package backend.academy.scrapper.service.github;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import backend.academy.scrapper.ScrapperTest;
+import backend.academy.scrapper.dto.LinkDto;
 import backend.academy.scrapper.dto.github.GitHubActivity;
+import backend.academy.scrapper.validation.LinkType;
+import java.net.URI;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,7 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class GitHubSourceServiceTest {
+class GitHubSourceServiceTest implements ScrapperTest {
 
     @InjectMocks
     private GitHubSourceService gitHubSourceService;
@@ -51,5 +57,21 @@ class GitHubSourceServiceTest {
         // then
         assertThat(diff).hasLineCount(5);
         assertThat(body).hasSizeLessThan(220);
+    }
+
+    @Test
+    void checkForUpdate_shouldUpdateCounter() {
+        // given
+        final LinkDto linkDto = new LinkDto(
+                URI.create("github.com/hcblmnla/test"), List.of(), List.of(), LinkType.GITHUB, new String[] {
+                    "hcblmnla", "test"
+                });
+
+        // when
+        IntStream.range(0, 150).forEach(ignored -> gitHubSourceService.checkForUpdate(linkDto));
+
+        // then
+        assertThat(gitHubSourceService.getAmountOfLinks()).isEqualTo(150);
+        assertThat(gitHubSourceService.getAmountOfLinks()).isZero();
     }
 }
