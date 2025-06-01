@@ -40,7 +40,8 @@ public abstract class AbstractWebClient {
                 })
                 .transformDeferred(CircuitBreakerOperator.of(circuitBreaker))
                 .transformDeferred(RateLimiterOperator.of(rateLimiter))
-                .retryWhen(Retry.backoff(maxRetryAttempts, minBackoff)
+                // backoff
+                .retryWhen(Retry.fixedDelay(maxRetryAttempts, minBackoff)
                         .filter(e -> e instanceof RetryableException)
                         .onRetryExhaustedThrow(this::createRetryException));
 

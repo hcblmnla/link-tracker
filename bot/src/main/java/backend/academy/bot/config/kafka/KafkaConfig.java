@@ -1,6 +1,7 @@
 package backend.academy.bot.config.kafka;
 
 import backend.academy.base.schema.bot.LinkUpdate;
+import backend.academy.bot.BotApplication;
 import backend.academy.bot.kafka.LinkUpdateKafkaListener;
 import backend.academy.bot.kafka.exception.KafkaErrorHandler;
 import backend.academy.bot.kafka.exception.LinkUpdateTrace;
@@ -43,6 +44,9 @@ public record KafkaConfig(
     public static final String CONTAINER_FACTORY = "linkUpdateKafkaListenerContainerFactory";
     public static final String ERROR_HANDLER = "kafkaErrorHandler";
 
+    private static final String TRUSTED_PACKAGE =
+            BotApplication.class.getPackage().getName();
+
     @Bean
     public KafkaAdmin admin() {
         return new KafkaAdmin(Map.of(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers));
@@ -59,7 +63,7 @@ public record KafkaConfig(
                 new ConcurrentKafkaListenerContainerFactory<>();
 
         final JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
-        deserializer.addTrustedPackages("backend.academy.base.schema.bot");
+        deserializer.addTrustedPackages(TRUSTED_PACKAGE);
         deserializer.setUseTypeMapperForKey(false);
 
         factory.setConsumerFactory(new DefaultKafkaConsumerFactory<>(
